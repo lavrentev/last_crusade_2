@@ -1,5 +1,9 @@
+#include "Map.h"
+#include "Tree.h"
+
 #include <iostream>
 #include <string>
+#include <sstream>
 #include <vector>
 #include <algorithm>
 
@@ -9,13 +13,20 @@ int main()
 	int W; // number of columns
 	int H; // number of rows
 	std::cin >> W >> H; std::cin.ignore();
+	room_type* T = new room_type[H*W];
 	for (int i = 0; i < H; i++)
 	{
 		std::string LINE; // each line represents a line in the grid and contains W integers T. The absolute value of T specifies the type of the room. If T is negative, the room cannot be rotated.
 		getline(std::cin, LINE);
+		std::stringstream ss(LINE);
+		for (int j = 0; j < W; j++)
+			ss >> T[i*W + j];
 	}
 	int EX; // the coordinate along the X axis of the exit.
 	std::cin >> EX; std::cin.ignore();
+
+	Map maze(W, H, EX, T);
+	PTree tree( &maze );
 
 	// game loop
 	while (1)
@@ -34,12 +45,10 @@ int main()
 			std::cin >> XR >> YR >> POSR; std::cin.ignore();
 		}
 
-		// Write an action using cout. DON'T FORGET THE "<< endl"
-		// To debug: cerr << "Debug messages..." << endl;
+		if( tree.update_tree(XI, YI, POSI) == -1 )
+			std::cerr << "Error updating tree." << std::endl;
 
-
-		// One line containing on of three commands: 'X Y LEFT', 'X Y RIGHT' or 'WAIT'
-		std::cout << "WAIT" << std::endl;
+		std::cout << tree.next_command() << std::endl;
 	}
 	
 	return 0;
