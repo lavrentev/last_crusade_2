@@ -2,7 +2,7 @@
 
 #define ABS(x) (((x) < 0) ? ((-1)*(x)) : (x))
 
-Map::Map(void) : 
+Map::Map() : 
 	W(0), H(0), ex(0), ey(0), T(nullptr)
 {}
 
@@ -485,7 +485,7 @@ posi_t Map::path_find(unsigned x, unsigned y, posi_t direction)
  *        [will be changed to next on success],
  *		  and direction of entry (from path_find)
  * @return -1 for error, 0 for success, 1 for getting
- *		   out of bounds
+ *		   out of bounds and for STOP
  */
 int Map::next_room(unsigned& x, unsigned& y, posi_t direction)
 {
@@ -506,6 +506,8 @@ int Map::next_room(unsigned& x, unsigned& y, posi_t direction)
 				return 1;
 			x++;
 			break;
+		case STOP:
+			return 1;
 		default:
 			return -1;
 	}
