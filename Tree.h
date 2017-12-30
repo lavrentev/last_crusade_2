@@ -29,6 +29,9 @@ class PTree
 	Map* map;
 	PStack commands;
 
+	bool found_exit;
+	PTreeNode* exit_node;
+
 public:
 	PTree();
 	PTree(Map* _map);
@@ -44,5 +47,14 @@ public:
 
 	// Function fetching the next command and executing it on the 'map'
 	std::string next_command();
+
+	int update_tree(unsigned xi, unsigned yi, std::string position);
+	int update_tree(unsigned xi, unsigned yi, posi_t position);
+
+private:
+	int build_tree(PTreeNode* node, unsigned xi, unsigned yi, posi_t position);
+	void backtrack();
+	inline void check_add_child(unsigned count, PTreeNode* node, unsigned xi, unsigned yi, posi_t position);
+	int actions_left(PTreeNode* node);
 };
 

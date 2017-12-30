@@ -12,7 +12,7 @@ PTreeNode::PTreeNode()
 	child[3] = nullptr;
 }
 
-PTreeNode::PTreeNode(unsigned _x, unsigned _y, posi_t _direction, PTreeNode* _parent = nullptr) :
+PTreeNode::PTreeNode(unsigned _x, unsigned _y, posi_t _direction, PTreeNode* _parent) :
 	x(_x), y(_y), direction(_direction), parent(_parent)
 {
 	child[0] = nullptr;
@@ -53,11 +53,11 @@ void PTreeNode::add_child(unsigned count, unsigned _x, unsigned _y, posi_t _dire
 
 
 PTree::PTree() :
-	root(nullptr), map(nullptr)
+	root(nullptr), map(nullptr), found_exit(false), exit_node(nullptr)
 {}
 
 PTree::PTree(Map* _map) :
-	root(nullptr)
+	root(nullptr), found_exit(false), exit_node(nullptr)
 {
 	map = _map;
 }
@@ -108,4 +108,260 @@ std::string PTree::next_command()
 		commands.pop();
 		return current_command;
 	}
+}
+
+int PTree::actions_left(PTreeNode* node)
+{
+	int count = 0;
+	PTreeNode* temp = node;
+	while( temp != root )
+	{
+		if( temp == temp->parent->child[0] )
+			count++;
+		if( temp == temp->parent->child[3] )
+			count--;
+		temp = temp->parent;
+	}
+	return count;
+}
+
+void PTree::check_add_child(unsigned count, PTreeNode* node, unsigned xi, unsigned yi, posi_t position)
+{
+	if( node->child[count] )
+	{
+		if( node->child[count]->x != xi || node->child[count]->y != yi )
+			deleteSubTree( node->child[count] );
+	}
+	node->add_child(count, xi, yi, position);
+}
+
+int PTree::build_tree(PTreeNode* node, unsigned xi, unsigned yi, posi_t position)
+{
+	unsigned next_x, next_y;
+	posi_t next_posi;
+	int status;
+	room_type room[4];
+
+	room[0] = map->get_room_type(xi, yi);
+
+	next_x = xi;
+	next_y = yi;
+	next_posi = map->path_find(xi, yi, position);
+	status = map->next_room(next_x, next_y, next_posi);
+	if( status == -1 )
+		return -1;
+	if( status == 0 )
+	{
+		check_add_child(0, node, xi, yi, position);
+
+		if( next_x == map->get_exit_x() && next_y == map->get_exit_y() )
+		{
+			found_exit = true;
+			exit_node = node->child[0];
+			map->set_room_type(xi, yi, room[0]);
+			return 0;
+		}
+
+		status = build_tree(node->child[0], next_x, next_y, next_posi);
+		if( status != 1 )
+			return status;
+	}
+
+	next_x = xi;
+	next_y = yi;
+	room[1] = map->rotate_left(xi, yi);
+	if( room[1] != room[0] )
+	{
+		next_posi = map->path_find(xi, yi, position);
+		status = map->next_room(next_x, next_y, next_posi);
+		if( status == -1 )
+		{
+			map->set_room_type(xi, yi, room[0]);
+			return -1;
+		}
+		if( status == 0 )
+		{
+			check_add_child(1, node, xi, yi, position);
+
+			if( next_x == map->get_exit_x() && next_y == map->get_exit_y() )
+			{
+				found_exit = true;
+				exit_node = node->child[1];
+				map->set_room_type(xi, yi, room[0]);
+				return 0;
+			}
+
+			status = build_tree(node->child[1], next_x, next_y, next_posi);
+			if( status != 1 )
+			{
+				map->set_room_type(xi, yi, room[0]);
+				return status;
+			}
+		}
+	}
+
+	next_x = xi;
+	next_y = yi;
+	room[2] = map->rotate_180(xi, yi);
+	if( room[2] != room[1] && room[2] != room[0] )
+	{
+		next_posi = map->path_find(xi, yi, position);
+		status = map->next_room(next_x, next_y, next_posi);
+		if( status == -1 )
+		{
+			map->set_room_type(xi, yi, room[0]);
+			return -1;
+		}
+		if( status == 0 )
+		{
+			check_add_child(2, node, xi, yi, position);
+
+			if( next_x == map->get_exit_x() && next_y == map->get_exit_y() )
+			{
+				found_exit = true;
+				exit_node = node->child[2];
+				map->set_room_type(xi, yi, room[0]);
+				return 0;
+			}
+
+			status = build_tree(node->child[2], next_x, next_y, next_posi);
+			if( status != 1 )
+			{
+				map->set_room_type(xi, yi, room[0]);
+				return status;
+			}
+		}
+	}
+
+	next_x = xi;
+	next_y = yi;
+	room[3] = map->rotate_right(xi, yi);
+	if( room[3] != room[2] && room[3] != room[1] && room[3] != room[0] )
+	{
+		if( actions_left(node) > 0 )
+		{
+			next_posi = map->path_find(xi, yi, position);
+			status = map->next_room(next_x, next_y, next_posi);
+			if( status == -1 )
+			{
+				map->set_room_type(xi, yi, room[0]);
+				return -1;
+			}
+			if( status == 0 )
+			{
+				check_add_child(3, node, xi, yi, position);
+
+				if( next_x == map->get_exit_x() && next_y == map->get_exit_y() )
+				{
+					found_exit = true;
+					exit_node = node->child[3];
+					map->set_room_type(xi, yi, room[0]);
+					return 0;
+				}
+
+				status = build_tree(node->child[3], next_x, next_y, next_posi);
+				if( status != 1 )
+				{
+					map->set_room_type(xi, yi, room[0]);
+					return status;
+				}
+			}
+		}
+	}
+
+	map->set_room_type(xi, yi, room[0]);
+	return 1;
+}
+
+void PTree::backtrack()
+{
+	if( exit_node )
+	{
+		PTreeNode* curr_node = exit_node;
+		while( curr_node != root )
+		{
+			std::string str;
+			std::stringstream ss( str );
+
+			if( curr_node == curr_node->parent->child[1] )
+			{
+				ss << curr_node->x << ' ' << curr_node->y << ' ' << "LEFT";
+				std::getline(ss, str);
+				commands.push(str);
+			}
+			else if( curr_node == curr_node->parent->child[2] )
+			{
+				ss << curr_node->x << ' ' << curr_node->y << ' ' << "RIGHT";
+				std::getline(ss, str);
+				commands.push(str);
+			}
+			else if( curr_node == curr_node->parent->child[3] )
+			{
+				ss << curr_node->x << ' ' << curr_node->y << ' ' << "RIGHT";
+				std::getline(ss, str);
+				commands.push(str);
+				commands.push(str);
+			}
+
+			curr_node = curr_node->parent;
+		}
+	}
+}
+
+int PTree::update_tree(unsigned xi, unsigned yi, posi_t position)
+{
+	if(!map)
+		return -1;
+
+	unsigned map_height = map->get_height();
+	unsigned map_width = map->get_width();
+	if( xi > map_width || yi > map_height || position == NO_ENTRY || position == STOP )
+		return -1;
+
+	unsigned next_x, next_y;
+	posi_t next_posi;
+
+	if(root)
+	{
+		if(!found_exit)
+			return 1;
+	}
+	else
+	{
+		root = new PTreeNode(xi, yi, position);
+		next_x = xi;
+		next_y = yi;
+		next_posi = map->path_find(next_x, next_y, position);
+		if( map->next_room(next_x, next_y, next_posi) != 0 )
+			return -1;
+
+		if( build_tree(root, next_x, next_y, next_posi) == -1 )
+			return -1;
+		if( !found_exit )
+			return 1;
+
+		backtrack();
+	}
+	return 0;
+}
+
+int PTree::update_tree(unsigned xi, unsigned yi, std::string position)
+{
+	posi_t posit;
+	switch( position[0] )
+	{
+		case 'T':
+			posit = TOP;
+			break;
+		case 'L':
+			posit = LEFT;
+			break;
+		case 'R':
+			posit = RIGHT;
+			break;
+		default:
+			posit = NO_ENTRY;
+			break;
+	}
+	return update_tree(xi, yi, posit);
 }
