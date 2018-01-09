@@ -2,6 +2,21 @@
 
 typedef short room_type;
 typedef enum posi { TOP, LEFT, RIGHT, STOP, NO_ENTRY = -1 } posi_t;
+typedef enum rock_status { UNKNOWN, SAFE, DANGER } rock_t;
+
+struct Rock
+{
+	unsigned x;
+	unsigned y;
+	posi_t position;
+	rock_t status;
+
+	Rock();
+	Rock(unsigned _x, unsigned _y, posi_t _position, rock_t _status = UNKNOWN);
+	~Rock();
+
+	bool equal(unsigned _x, unsigned _y, posi_t _position);
+};
 
 class Map
 {

@@ -2,6 +2,26 @@
 
 #define ABS(x) (((x) < 0) ? ((-1)*(x)) : (x))
 
+Rock::Rock() :
+	x(0), y(0), position(NO_ENTRY), status(UNKNOWN)
+{}
+
+Rock::Rock(unsigned _x, unsigned _y, posi_t _position, rock_t _status) :
+	x(_x), y(_y), position(_position), status(_status)
+{}
+
+Rock::~Rock()
+{}
+
+bool Rock::equal(unsigned _x, unsigned _y, posi_t _position)
+{
+	if( x == _x && y == _y && position == _position )
+		return true;
+	else
+		return false;
+}
+
+
 Map::Map() : 
 	W(0), H(0), ex(0), ey(0), T(nullptr)
 {}
