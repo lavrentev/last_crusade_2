@@ -73,6 +73,8 @@ PTree::~PTree()
 
 		delete root;
 	}
+
+	commands.clear();
 }
 
 void PTree::deleteSubTree(PTreeNode* node)
@@ -94,7 +96,7 @@ std::string PTree::next_command()
 		return std::string("WAIT");
 	else
 	{
-		std::string current_command( commands.top() );
+		std::string current_command( commands.back() );
 		std::stringstream temp( current_command );
 
 		unsigned x, y;
@@ -105,7 +107,7 @@ std::string PTree::next_command()
 		if( rotation.compare("LEFT") == 0 )
 			map->rotate_left(x, y);
 
-		commands.pop();
+		commands.pop_back();
 		return current_command;
 	}
 }
@@ -277,30 +279,41 @@ void PTree::backtrack()
 {
 	if( exit_node )
 	{
+		std::stack<std::string> reserve;
 		PTreeNode* curr_node = exit_node;
 		while( curr_node != root )
 		{
 			std::string str;
 			std::stringstream ss( str );
 
-			if( curr_node == curr_node->parent->child[1] )
+			if( curr_node == curr_node->parent->child[0] )
+			{
+				if( reserve.empty() )
+					commands.push_back(std::string("WAIT"));
+				else
+				{
+					commands.push_back(reserve.top());
+					reserve.pop();
+				}
+			}
+			else if( curr_node == curr_node->parent->child[1] )
 			{
 				ss << curr_node->x << ' ' << curr_node->y << ' ' << "LEFT";
 				std::getline(ss, str);
-				commands.push(str);
+				commands.push_back(str);
 			}
 			else if( curr_node == curr_node->parent->child[2] )
 			{
 				ss << curr_node->x << ' ' << curr_node->y << ' ' << "RIGHT";
 				std::getline(ss, str);
-				commands.push(str);
+				commands.push_back(str);
 			}
 			else if( curr_node == curr_node->parent->child[3] )
 			{
 				ss << curr_node->x << ' ' << curr_node->y << ' ' << "RIGHT";
 				std::getline(ss, str);
-				commands.push(str);
-				commands.push(str);
+				commands.push_back(str);
+				reserve.push(str);
 			}
 
 			curr_node = curr_node->parent;

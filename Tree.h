@@ -5,7 +5,7 @@
 
 #include "Map.h"
 
-typedef std::stack<std::string> PStack;
+typedef std::vector<std::string> PStack;
 
 struct PTreeNode
 {
