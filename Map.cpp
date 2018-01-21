@@ -73,6 +73,7 @@ Map::~Map(void)
 {
 	if(T)
 		delete[] T;
+	rocks.clear();
 }
 
 unsigned Map::get_width()
@@ -192,6 +193,118 @@ unsigned Map::get_exit_x()
 unsigned Map::get_exit_y()
 {
 	return ey;
+}
+
+/**
+ * Adds a rock to the map
+ * 
+ * @param coordinates of the rock x,y and direction of movement
+ * @return -1 for error, 0 for success and
+ * 1 if a rock with the same parameters already exists on the map
+ */
+int Map::add_rock(unsigned xr, unsigned yr, posi_t direction)
+{
+	if( xr >= W || yr >= H || direction == NO_ENTRY || direction == STOP )
+		return -1;
+
+	for( unsigned i = 0; i < rocks.size(); ++i )
+	{
+		if( rocks[i].equal(xr, yr, direction) )
+			return 1;
+	}
+	rocks.push_back( Rock(xr, yr, direction) );
+
+	return 0;
+}
+
+int Map::add_rock(unsigned xr, unsigned yr, std::string direction)
+{
+	posi_t posit;
+	switch( direction[0] )
+	{
+		case 'T':
+			posit = TOP;
+			break;
+		case 'L':
+			posit = LEFT;
+			break;
+		case 'R':
+			posit = RIGHT;
+			break;
+		default:
+			posit = NO_ENTRY;
+			break;
+	}
+	return add_rock(xr, yr, posit);
+}
+
+/**
+ * Returns the amount of rocks on the map
+ */
+unsigned Map::rocks_size()
+{
+	return rocks.size();
+}
+
+/**
+ * Returns a reference to a rock indexed 'num'
+ */
+Rock& Map::get_rock(unsigned num)
+{
+	return rocks.at(num);
+}
+
+/**
+ * Deletes a rock with an index 'num'
+ */
+void Map::delete_rock(unsigned num)
+{
+	if( num < rocks.size() )
+		rocks.erase( rocks.begin() + num );
+}
+
+/**
+ * Check if the map has rocks on it
+ */
+bool Map::has_rocks()
+{
+	if( rocks.empty() )
+		return false;
+	else
+		return true;
+}
+
+/**
+ * Changes the rocks according to their movement
+ * like it's the next turn
+ *
+ * @return -1 for error, 0 for success
+ */
+int Map::move_rocks()
+{
+	posi_t next_posi;
+	unsigned next_x, next_y;
+	int status;
+
+	for( int i = 0; i < rocks.size(); ++i )
+	{
+		next_x = rocks[i].x;
+		next_y = rocks[i].y;
+		next_posi = path_find( next_x, next_y, rocks[i].position );
+		status = next_room( next_x, next_y, next_posi );
+		if( status == -1 )
+			return -1;
+		if( status == 1 )
+			delete_rock(i);
+		else
+		{
+			rocks[i].x = next_x;
+			rocks[i].y = next_y;
+			rocks[i].position = next_posi;
+		}
+	}
+
+	return 0;
 }
 
 /**
