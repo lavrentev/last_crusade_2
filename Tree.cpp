@@ -453,6 +453,10 @@ int PTree::update_tree(unsigned xi, unsigned yi, posi_t position)
 	{
 		if( !found_exit )
 			return 1;
+		if( !current_node )
+			return -1;
+		if( current_node->x != xi || current_node->y != yi || current_node->direction != position )
+			return -1;
 	}
 	else
 	{
