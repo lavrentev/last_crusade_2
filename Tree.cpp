@@ -336,7 +336,7 @@ int PTree::build_tree(PTreeNode* node, unsigned xi, unsigned yi, posi_t position
 
 void PTree::backtrack()
 {
-	if( exit_node )
+	if( exit_node && current_node )
 	{
 		std::stack<std::string> reserve;
 		PTreeNode* node = exit_node;
@@ -380,6 +380,62 @@ void PTree::backtrack()
 	}
 }
 
+int PTree::check_rock(Rock& rock)
+{
+	if( !found_exit || !exit_node || !current_node )
+		return -1;
+
+	int status;
+	posi_t next_posi;
+	unsigned next_x, next_y;
+	PTreeNode* temp_node = current_node;
+
+	while( temp_node != exit_node )
+	{
+		next_x = rock.x;
+		next_y = rock.y;
+
+		if( next_x == temp_node->x && next_y == temp_node->y )
+		{
+			room_type temp_room = map->get_room_type( next_x, next_y );
+			if( temp_room == 4 )
+			{
+				if( temp_node->direction == TOP && rock.position == LEFT )
+				{
+					rock.status = DANGER;
+					return 1;
+				}
+			}
+			else if( temp_room == 5 )
+			{
+				if( temp_node->direction == TOP && rock.position == RIGHT )
+				{
+					rock.status = DANGER;
+					return 1;
+				}
+			}
+			else
+			{
+				rock.status = DANGER;
+				return 1;
+			}
+		}
+
+		next_posi = map->path_find(next_x, next_y, rock.position);
+		status = map->next_room(next_x, next_y, next_posi);
+
+		if( status == -1 )
+			return -1;
+		if( status == 1 )
+			break;
+
+		temp_node = find_path_child( temp_node );
+	}
+
+	rock.status = SAFE;
+	return 0;
+}
+
 int PTree::update_tree(unsigned xi, unsigned yi, posi_t position)
 {
 	if( !map )
@@ -395,7 +451,7 @@ int PTree::update_tree(unsigned xi, unsigned yi, posi_t position)
 
 	if(root)
 	{
-		if(!found_exit)
+		if( !found_exit )
 			return 1;
 	}
 	else

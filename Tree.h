@@ -61,5 +61,8 @@ private:
 	int actions_left(PTreeNode* node);
 	int check_draw_path(PTreeNode* node);
 	PTreeNode* find_path_child(PTreeNode* node);
+
+	// Function checking if the rock is dangerous for Indy
+	int check_rock(Rock& rock);
 };
 
