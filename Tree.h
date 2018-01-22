@@ -48,6 +48,7 @@ public:
 	void set_map(Map* _map);
 
 	// Function fetching the next command and executing it on the 'map'
+	// Also it updates the state of the tree and map to that of next turn of the game
 	std::string next_command();
 
 	int update_tree(unsigned xi, unsigned yi, std::string position);
@@ -59,5 +60,6 @@ private:
 	inline void check_add_child(unsigned count, PTreeNode* node, unsigned xi, unsigned yi, posi_t position);
 	int actions_left(PTreeNode* node);
 	int check_draw_path(PTreeNode* node);
+	PTreeNode* find_path_child(PTreeNode* node);
 };
 

@@ -94,8 +94,28 @@ void PTree::deleteSubTree(PTreeNode* node)
 	}
 }
 
+PTreeNode* PTree::find_path_child(PTreeNode* node)
+{
+	if( !found_exit || active_path_num == 0 )
+		return nullptr;
+
+	for( int i = 0; i < 4; ++i )
+	{
+		if( node->child[i] )
+		{
+			if( node->child[i]->path_num == active_path_num )
+				return node->child[i];
+		}
+	}
+
+	return nullptr;
+}
+
 std::string PTree::next_command()
 {
+	current_node = find_path_child( current_node );
+	map->move_rocks();
+
 	if( commands.empty() )
 		return std::string("WAIT");
 	else
@@ -118,7 +138,7 @@ std::string PTree::next_command()
 
 int PTree::actions_left(PTreeNode* node)
 {
-	if( !node )
+	if( !node || !current_node )
 		return -1;
 
 	int count = 0;
@@ -136,7 +156,7 @@ int PTree::actions_left(PTreeNode* node)
 
 int PTree::check_draw_path(PTreeNode* node)
 {
-	if( !node )
+	if( !node || !current_node )
 		return -1;
 
 	bool found_new_nodes = false;
