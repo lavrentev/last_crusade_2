@@ -5,6 +5,7 @@ PTreeNode::PTreeNode()
 	x = 0;
 	y = 0;
 	direction = NO_ENTRY;
+	path_num = 0;
 	parent = nullptr;
 	child[0] = nullptr;
 	child[1] = nullptr;
@@ -13,7 +14,7 @@ PTreeNode::PTreeNode()
 }
 
 PTreeNode::PTreeNode(unsigned _x, unsigned _y, posi_t _direction, PTreeNode* _parent) :
-	x(_x), y(_y), direction(_direction), parent(_parent)
+	x(_x), y(_y), direction(_direction), path_num(0), parent(_parent)
 {
 	child[0] = nullptr;
 	child[1] = nullptr;
@@ -47,17 +48,20 @@ int PTreeNode::has_children()
  */
 void PTreeNode::add_child(unsigned count, unsigned _x, unsigned _y, posi_t _direction)
 {
-	child[count] = new PTreeNode(_x, _y, _direction, this);
+	if( !child[count] )
+		child[count] = new PTreeNode(_x, _y, _direction, this);
 }
 
 
 
 PTree::PTree() :
-	root(nullptr), map(nullptr), found_exit(false), exit_node(nullptr)
+	root(nullptr), map(nullptr), active_path_num(0),
+	current_node(nullptr), found_exit(false), exit_node(nullptr)
 {}
 
 PTree::PTree(Map* _map) :
-	root(nullptr), found_exit(false), exit_node(nullptr)
+	root(nullptr), active_path_num(0),
+	current_node(nullptr), found_exit(false), exit_node(nullptr)
 {
 	map = _map;
 }
@@ -114,9 +118,12 @@ std::string PTree::next_command()
 
 int PTree::actions_left(PTreeNode* node)
 {
+	if( !node )
+		return -1;
+
 	int count = 0;
 	PTreeNode* temp = node;
-	while( temp != root )
+	while( temp != current_node )
 	{
 		if( temp == temp->parent->child[0] )
 			count++;
@@ -127,11 +134,47 @@ int PTree::actions_left(PTreeNode* node)
 	return count;
 }
 
+int PTree::check_draw_path(PTreeNode* node)
+{
+	if( !node )
+		return -1;
+
+	bool found_new_nodes = false;
+	PTreeNode* temp = node;
+	while( temp != current_node )
+	{
+		if( temp->path_num == 0 )
+		{
+			found_new_nodes = true;
+			temp->path_num = active_path_num + 1;
+		}
+		temp = temp->parent;
+	}
+
+	if( found_new_nodes )
+	{
+		found_exit = true;
+		active_path_num++;
+		exit_node = node;
+		temp = node;
+		while( temp != current_node )
+		{
+			temp->path_num = active_path_num;
+			temp = temp->parent;
+		}
+
+		return 0;
+	}
+
+	return 1;
+}
+
 void PTree::check_add_child(unsigned count, PTreeNode* node, unsigned xi, unsigned yi, posi_t position)
 {
 	if( node->child[count] )
 	{
-		if( node->child[count]->x != xi || node->child[count]->y != yi )
+		if( node->child[count]->x != xi || node->child[count]->y != yi
+				|| node->child[count]->direction != position )
 			deleteSubTree( node->child[count] );
 	}
 	node->add_child(count, xi, yi, position);
@@ -158,10 +201,9 @@ int PTree::build_tree(PTreeNode* node, unsigned xi, unsigned yi, posi_t position
 
 		if( next_x == map->get_exit_x() && next_y == map->get_exit_y() )
 		{
-			found_exit = true;
-			exit_node = node->child[0];
+			status = check_draw_path( node->child[0] );
 			map->set_room_type(xi, yi, room[0]);
-			return 0;
+			return status;
 		}
 
 		status = build_tree(node->child[0], next_x, next_y, next_posi);
@@ -187,10 +229,9 @@ int PTree::build_tree(PTreeNode* node, unsigned xi, unsigned yi, posi_t position
 
 			if( next_x == map->get_exit_x() && next_y == map->get_exit_y() )
 			{
-				found_exit = true;
-				exit_node = node->child[1];
+				status = check_draw_path( node->child[1] );
 				map->set_room_type(xi, yi, room[0]);
-				return 0;
+				return status;
 			}
 
 			status = build_tree(node->child[1], next_x, next_y, next_posi);
@@ -220,10 +261,9 @@ int PTree::build_tree(PTreeNode* node, unsigned xi, unsigned yi, posi_t position
 
 			if( next_x == map->get_exit_x() && next_y == map->get_exit_y() )
 			{
-				found_exit = true;
-				exit_node = node->child[2];
+				status = check_draw_path( node->child[2] );
 				map->set_room_type(xi, yi, room[0]);
-				return 0;
+				return status;
 			}
 
 			status = build_tree(node->child[2], next_x, next_y, next_posi);
@@ -255,10 +295,9 @@ int PTree::build_tree(PTreeNode* node, unsigned xi, unsigned yi, posi_t position
 
 				if( next_x == map->get_exit_x() && next_y == map->get_exit_y() )
 				{
-					found_exit = true;
-					exit_node = node->child[3];
+					status = check_draw_path( node->child[3] );
 					map->set_room_type(xi, yi, room[0]);
-					return 0;
+					return status;
 				}
 
 				status = build_tree(node->child[3], next_x, next_y, next_posi);
@@ -280,13 +319,13 @@ void PTree::backtrack()
 	if( exit_node )
 	{
 		std::stack<std::string> reserve;
-		PTreeNode* curr_node = exit_node;
-		while( curr_node != root )
+		PTreeNode* node = exit_node;
+		while( node != current_node )
 		{
 			std::string str;
 			std::stringstream ss( str );
 
-			if( curr_node == curr_node->parent->child[0] )
+			if( node == node->parent->child[0] )
 			{
 				if( reserve.empty() )
 					commands.push_back(std::string("WAIT"));
@@ -296,34 +335,34 @@ void PTree::backtrack()
 					reserve.pop();
 				}
 			}
-			else if( curr_node == curr_node->parent->child[1] )
+			else if( node == node->parent->child[1] )
 			{
-				ss << curr_node->x << ' ' << curr_node->y << ' ' << "LEFT";
+				ss << node->x << ' ' << node->y << ' ' << "LEFT";
 				std::getline(ss, str);
 				commands.push_back(str);
 			}
-			else if( curr_node == curr_node->parent->child[2] )
+			else if( node == node->parent->child[2] )
 			{
-				ss << curr_node->x << ' ' << curr_node->y << ' ' << "RIGHT";
+				ss << node->x << ' ' << node->y << ' ' << "RIGHT";
 				std::getline(ss, str);
 				commands.push_back(str);
 			}
-			else if( curr_node == curr_node->parent->child[3] )
+			else if( node == node->parent->child[3] )
 			{
-				ss << curr_node->x << ' ' << curr_node->y << ' ' << "RIGHT";
+				ss << node->x << ' ' << node->y << ' ' << "RIGHT";
 				std::getline(ss, str);
 				commands.push_back(str);
 				reserve.push(str);
 			}
 
-			curr_node = curr_node->parent;
+			node = node->parent;
 		}
 	}
 }
 
 int PTree::update_tree(unsigned xi, unsigned yi, posi_t position)
 {
-	if(!map)
+	if( !map )
 		return -1;
 
 	unsigned map_height = map->get_height();
@@ -342,6 +381,7 @@ int PTree::update_tree(unsigned xi, unsigned yi, posi_t position)
 	else
 	{
 		root = new PTreeNode(xi, yi, position);
+		current_node = root;
 		next_x = xi;
 		next_y = yi;
 		next_posi = map->path_find(next_x, next_y, position);

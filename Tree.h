@@ -12,6 +12,7 @@ struct PTreeNode
 public:
 	unsigned x, y;
 	posi_t direction;
+	unsigned path_num;
 	PTreeNode* parent;
 	PTreeNode* child[4];
 
@@ -28,9 +29,10 @@ class PTree
 	PTreeNode* root;
 	Map* map;
 	PStack commands;
-
+	unsigned active_path_num;
 	bool found_exit;
 	PTreeNode* exit_node;
+	PTreeNode* current_node;
 
 public:
 	PTree();
@@ -56,5 +58,6 @@ private:
 	void backtrack();
 	inline void check_add_child(unsigned count, PTreeNode* node, unsigned xi, unsigned yi, posi_t position);
 	int actions_left(PTreeNode* node);
+	int check_draw_path(PTreeNode* node);
 };
 
