@@ -380,6 +380,13 @@ void PTree::backtrack()
 	}
 }
 
+/**
+ * Checks if rock is going to cross Indy's path or not
+ * 
+ * @param rock in question
+ * @return 0 if the rock is not dangerous, 1 if it is and
+ * -1 for error
+ */
 int PTree::check_rock(Rock& rock)
 {
 	if( !found_exit || !exit_node || !current_node )
@@ -390,17 +397,18 @@ int PTree::check_rock(Rock& rock)
 	unsigned next_x, next_y;
 	PTreeNode* temp_node = current_node;
 
+	next_x = rock.x;
+	next_y = rock.y;
+	next_posi = rock.position;
+
 	while( temp_node != exit_node )
 	{
-		next_x = rock.x;
-		next_y = rock.y;
-
 		if( next_x == temp_node->x && next_y == temp_node->y )
 		{
 			room_type temp_room = map->get_room_type( next_x, next_y );
 			if( temp_room == 4 )
 			{
-				if( temp_node->direction == TOP && rock.position == LEFT )
+				if( temp_node->direction == TOP && next_posi == LEFT )
 				{
 					rock.status = DANGER;
 					return 1;
@@ -408,7 +416,7 @@ int PTree::check_rock(Rock& rock)
 			}
 			else if( temp_room == 5 )
 			{
-				if( temp_node->direction == TOP && rock.position == RIGHT )
+				if( temp_node->direction == TOP && next_posi == RIGHT )
 				{
 					rock.status = DANGER;
 					return 1;
@@ -421,7 +429,7 @@ int PTree::check_rock(Rock& rock)
 			}
 		}
 
-		next_posi = map->path_find(next_x, next_y, rock.position);
+		next_posi = map->path_find(next_x, next_y, next_posi);
 		status = map->next_room(next_x, next_y, next_posi);
 
 		if( status == -1 )
@@ -433,6 +441,76 @@ int PTree::check_rock(Rock& rock)
 	}
 
 	rock.status = SAFE;
+	return 0;
+}
+
+/**
+ * Checks if rock is going to cross Indy's path or not
+ * and if it does marks the tree node at which they meet
+ * (overload of the previous function)
+ *
+ * @param rock in question and potentially dangerous node
+ * @return 0 if the rock is not dangerous, 1 if it is and
+ * -1 for error
+ */
+int PTree::check_rock(Rock& rock, PTreeNode*& danger_node)
+{
+	if( !found_exit || !exit_node || !current_node )
+		return -1;
+
+	int status;
+	posi_t next_posi;
+	unsigned next_x, next_y;
+	PTreeNode* temp_node = current_node;
+
+	next_x = rock.x;
+	next_y = rock.y;
+	next_posi = rock.position;
+
+	while( temp_node != exit_node )
+	{
+		if( next_x == temp_node->x && next_y == temp_node->y )
+		{
+			room_type temp_room = map->get_room_type( next_x, next_y );
+			if( temp_room == 4 )
+			{
+				if( temp_node->direction == TOP && next_posi == LEFT )
+				{
+					rock.status = DANGER;
+					danger_node = temp_node;
+					return 1;
+				}
+			}
+			else if( temp_room == 5 )
+			{
+				if( temp_node->direction == TOP && next_posi == RIGHT )
+				{
+					rock.status = DANGER;
+					danger_node = temp_node;
+					return 1;
+				}
+			}
+			else
+			{
+				rock.status = DANGER;
+				danger_node = temp_node;
+				return 1;
+			}
+		}
+
+		next_posi = map->path_find(next_x, next_y, next_posi);
+		status = map->next_room(next_x, next_y, next_posi);
+
+		if( status == -1 )
+			return -1;
+		if( status == 1 )
+			break;
+
+		temp_node = find_path_child( temp_node );
+	}
+
+	rock.status = SAFE;
+	danger_node = nullptr;
 	return 0;
 }
 

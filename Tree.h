@@ -62,7 +62,8 @@ private:
 	int check_draw_path(PTreeNode* node);
 	PTreeNode* find_path_child(PTreeNode* node);
 
-	// Function checking if the rock is dangerous for Indy
+	// Functions checking if the rock is dangerous for Indy
 	int check_rock(Rock& rock);
+	int check_rock(Rock& rock, PTreeNode*& danger_node);
 };
 
