@@ -2,10 +2,9 @@
 #include <string>
 #include <sstream>
 #include <stack>
+#include <map>
 
 #include "Map.h"
-
-typedef std::vector<std::string> PStack;
 
 struct PTreeNode
 {
@@ -24,11 +23,15 @@ public:
 	void add_child(unsigned count, unsigned _x, unsigned _y, posi_t _direction);
 };
 
+typedef std::vector<std::string> PStack;
+typedef std::map<PTreeNode*, std::string> RStack;
+
 class PTree
 {
 	PTreeNode* root;
 	Map* map;
 	PStack commands;
+	RStack rock_commands;
 	unsigned active_path_num;
 	bool found_exit;
 	PTreeNode* exit_node;
@@ -65,5 +68,6 @@ private:
 	// Functions checking if the rock is dangerous for Indy
 	int check_rock(Rock& rock);
 	int check_rock(Rock& rock, PTreeNode*& danger_node);
+	// Function trying to stop the rock from crushing Indy
+	int stop_rock(Rock& rock, PTreeNode* danger_node);
 };
-

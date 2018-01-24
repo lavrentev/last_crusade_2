@@ -146,7 +146,12 @@ int PTree::actions_left(PTreeNode* node)
 	while( temp != current_node )
 	{
 		if( temp == temp->parent->child[0] )
-			count++;
+		{
+			if( rock_commands.find(temp) == rock_commands.end() )
+				count++;
+			else
+				count--;
+		}
 		if( temp == temp->parent->child[3] )
 			count--;
 		temp = temp->parent;
@@ -512,6 +517,116 @@ int PTree::check_rock(Rock& rock, PTreeNode*& danger_node)
 	rock.status = SAFE;
 	danger_node = nullptr;
 	return 0;
+}
+
+/**
+ * Tries to stop a rock by rotating the rooms in front
+ * so it either stops or goes out of bounds of the map
+ *
+ * @param rock in question and dangerous node
+ * @return 0 if the rock was successfully stopped,
+ * 1 if it wasn't and -1 for error
+ */
+int PTree::stop_rock(Rock& rock, PTreeNode* danger_node)
+{
+	if( !found_exit || !exit_node || !current_node || !danger_node
+		|| danger_node->path_num != active_path_num )
+		return -1;
+
+	if( actions_left(danger_node) > 0 )
+	{
+		int status;
+		unsigned next_x = rock.x;
+		unsigned next_y = rock.y;
+		posi_t next_posi = rock.position;
+		room_type room[4];
+		
+		PTreeNode* temp_node = current_node;
+		while( temp_node != danger_node )
+		{
+			next_posi = map->path_find(next_x, next_y, next_posi);
+			status = map->next_room(next_x, next_y, next_posi);
+			
+			if( status == -1 )
+				return -1;
+			if( status == 1 )
+				return 0;
+
+			temp_node = find_path_child( temp_node );
+			if( temp_node == temp_node->parent->child[0] )
+			{
+				std::string str;
+				std::stringstream ss( str );
+
+				room[0] = map->get_room_type(next_x, next_y);
+
+				room[1] = map->rotate_left(next_x, next_y);
+				if( room[1] != room[0] )
+				{
+					status = check_rock(rock);
+					if( status == -1 )
+						return -1;
+					if( status == 0 )
+					{
+						ss << next_x << ' ' << next_y << " LEFT";
+						rock_commands[temp_node] = str;
+						map->set_room_type(next_x, next_y, room[0]);
+						return 0;
+					}
+				}
+				
+				room[2] = map->rotate_180(next_x, next_y);
+				if( room[2] != room[1] && room[2] != room[0] )
+				{
+					status = check_rock(rock);
+					if( status == -1 )
+						return -1;
+					if( status == 0 )
+					{
+						ss << next_x << ' ' << next_y << " RIGHT";
+						rock_commands[temp_node] = str;
+						map->set_room_type(next_x, next_y, room[0]);
+						return 0;
+					}
+				}
+
+				room[3] = map->rotate_right(next_x, next_y);
+				if( room[3] != room[2] && room[3] != room[1] && room[3] != room[0] )
+				{
+					if( actions_left(temp_node->parent) > 0 )
+					{
+						status = check_rock(rock);
+						if( status == -1 )
+							return -1;
+						if( status == 0 )
+						{
+							ss << next_x << ' ' << next_y << " RIGHT";
+							rock_commands[temp_node] = str;
+
+							PTreeNode* counter_node = temp_node;
+							while( counter_node != current_node )
+							{
+								if( counter_node == counter_node->parent->child[0]
+									&& rock_commands.find(counter_node) == rock_commands.end() )
+								{
+									rock_commands[counter_node] = str;
+									break;
+								}
+								counter_node = counter_node->parent;
+							}
+
+							map->set_room_type(next_x, next_y, room[0]);
+							return 0;
+						}
+					}
+
+					map->set_room_type(next_x, next_y, room[0]);
+				}
+			}
+		}
+	}
+
+	return 1;
 }
 
 int PTree::update_tree(unsigned xi, unsigned yi, posi_t position)
