@@ -344,6 +344,7 @@ void PTree::backtrack()
 	if( exit_node && current_node )
 	{
 		std::stack<std::string> reserve;
+		RStack::iterator it;
 		PTreeNode* node = exit_node;
 		while( node != current_node )
 		{
@@ -352,13 +353,19 @@ void PTree::backtrack()
 
 			if( node == node->parent->child[0] )
 			{
-				if( reserve.empty() )
-					commands.push_back(std::string("WAIT"));
-				else
+				it = rock_commands.find(node);
+				if( it != rock_commands.end() )
+				{
+					commands.push_back(it->second);
+					rock_commands.erase(it);
+				}
+				else if( !reserve.empty() )
 				{
 					commands.push_back(reserve.top());
 					reserve.pop();
 				}
+				else
+					commands.push_back(std::string("WAIT"));
 			}
 			else if( node == node->parent->child[1] )
 			{
