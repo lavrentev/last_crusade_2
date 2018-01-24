@@ -29,6 +29,7 @@ int main()
 	PTree tree( &maze );
 
 	// game loop
+	int status;
 	while (1)
 	{
 		int XI;
@@ -43,10 +44,15 @@ int main()
 			int YR;
 			std::string POSR;
 			std::cin >> XR >> YR >> POSR; std::cin.ignore();
+			maze.add_rock(XR, YR, POSR);
 		}
 
-		if( tree.update_tree(XI, YI, POSI) == -1 )
+		status = tree.update_tree(XI, YI, POSI);
+
+		if( status == -1 )
 			std::cerr << "Error updating tree." << std::endl;
+		if( status == 1 )
+			std::cerr << "Couldn't find a solution." << std::endl;
 
 		std::cout << tree.next_command() << std::endl;
 	}
