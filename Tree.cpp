@@ -55,13 +55,13 @@ void PTreeNode::add_child(unsigned count, unsigned _x, unsigned _y, posi_t _dire
 
 
 PTree::PTree() :
-	root(nullptr), map(nullptr), active_path_num(0),
-	current_node(nullptr), found_exit(false), exit_node(nullptr)
+	root(nullptr), map(nullptr), active_path_num(0), current_node(nullptr)
+	, found_exit(false), backtrack_needed(false), exit_node(nullptr)
 {}
 
 PTree::PTree(Map* _map) :
-	root(nullptr), active_path_num(0),
-	current_node(nullptr), found_exit(false), exit_node(nullptr)
+	root(nullptr), active_path_num(0), current_node(nullptr)
+	, found_exit(false), backtrack_needed(false), exit_node(nullptr)
 {
 	map = _map;
 }
@@ -78,6 +78,7 @@ PTree::~PTree()
 		delete root;
 	}
 
+	rock_commands.clear();
 	commands.clear();
 }
 
@@ -341,8 +342,10 @@ int PTree::build_tree(PTreeNode* node, unsigned xi, unsigned yi, posi_t position
 
 void PTree::backtrack()
 {
-	if( exit_node && current_node )
+	if( exit_node && current_node && backtrack_needed )
 	{
+		commands.clear();
+
 		std::stack<std::string> reserve;
 		RStack::iterator it;
 		PTreeNode* node = exit_node;
@@ -390,6 +393,8 @@ void PTree::backtrack()
 			node = node->parent;
 		}
 	}
+
+	backtrack_needed = false;
 }
 
 /**

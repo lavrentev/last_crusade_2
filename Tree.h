@@ -34,6 +34,7 @@ class PTree
 	RStack rock_commands;
 	unsigned active_path_num;
 	bool found_exit;
+	bool backtrack_needed;
 	PTreeNode* exit_node;
 	PTreeNode* current_node;
 
