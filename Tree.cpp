@@ -581,6 +581,7 @@ int PTree::stop_rock(Rock& rock, PTreeNode* danger_node)
 					if( status == 0 )
 					{
 						ss << next_x << ' ' << next_y << " LEFT";
+						std::getline(ss, str);
 						rock_commands[temp_node] = str;
 						map->set_room_type(next_x, next_y, room[0]);
 						return 0;
@@ -596,6 +597,7 @@ int PTree::stop_rock(Rock& rock, PTreeNode* danger_node)
 					if( status == 0 )
 					{
 						ss << next_x << ' ' << next_y << " RIGHT";
+						std::getline(ss, str);
 						rock_commands[temp_node] = str;
 						map->set_room_type(next_x, next_y, room[0]);
 						return 0;
@@ -613,6 +615,7 @@ int PTree::stop_rock(Rock& rock, PTreeNode* danger_node)
 						if( status == 0 )
 						{
 							ss << next_x << ' ' << next_y << " RIGHT";
+							std::getline(ss, str);
 							rock_commands[temp_node] = str;
 
 							PTreeNode* counter_node = temp_node;
