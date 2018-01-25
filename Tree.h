@@ -71,4 +71,7 @@ private:
 	int check_rock(Rock& rock, PTreeNode*& danger_node);
 	// Function trying to stop the rock from crushing Indy
 	int stop_rock(Rock& rock, PTreeNode* danger_node);
+	// Functions imitating the path on the map
+	int open_path();
+	int close_path();
 };

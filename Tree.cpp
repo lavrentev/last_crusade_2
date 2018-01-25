@@ -398,6 +398,107 @@ void PTree::backtrack()
 }
 
 /**
+ * Changes the map as if all the rooms were rotated
+ * according to active path to the exit
+ * 
+ * @return 0 for success, -1 for error
+ */
+int PTree::open_path()
+{
+	if( !found_exit || !exit_node || !current_node )
+		return -1;
+
+	RStack::iterator it;
+	PTreeNode* temp_node = exit_node;
+	while( temp_node != current_node )
+	{
+		if( temp_node == temp_node->parent->child[0] )
+		{
+			it = rock_commands.find(temp_node);
+			if( it != rock_commands.end() )
+			{
+				std::string current_command( it->second );
+				std::stringstream temp( current_command );
+
+				unsigned x, y;
+				std::string rotation;
+				temp >> x >> y >> rotation;
+				if( rotation.compare("RIGHT") == 0 )
+					map->rotate_right(x, y);
+				if( rotation.compare("LEFT") == 0 )
+					map->rotate_left(x, y);
+			}
+		}
+		else if( temp_node == temp_node->parent->child[1] )
+		{
+			map->rotate_left(temp_node->x, temp_node->y);
+		}
+		else if( temp_node == temp_node->parent->child[2] )
+		{
+			map->rotate_right(temp_node->x, temp_node->y);
+		}
+		else if( temp_node == temp_node->parent->child[3] )
+		{
+			map->rotate_180(temp_node->x, temp_node->y);
+		}
+
+		temp_node = temp_node->parent;
+	}
+
+	return 0;
+}
+
+/**
+ * Cancels the changes made by open_path function
+ * 
+ * @return 0 for success, -1 for error
+ */
+int PTree::close_path()
+{
+	if( !found_exit || !exit_node || !current_node )
+		return -1;
+
+	RStack::iterator it;
+	PTreeNode* temp_node = exit_node;
+	while( temp_node != current_node )
+	{
+		if( temp_node == temp_node->parent->child[0] )
+		{
+			it = rock_commands.find(temp_node);
+			if( it != rock_commands.end() )
+			{
+				std::string current_command( it->second );
+				std::stringstream temp( current_command );
+
+				unsigned x, y;
+				std::string rotation;
+				temp >> x >> y >> rotation;
+				if( rotation.compare("RIGHT") == 0 )
+					map->rotate_left(x, y);
+				if( rotation.compare("LEFT") == 0 )
+					map->rotate_right(x, y);
+			}
+		}
+		else if( temp_node == temp_node->parent->child[1] )
+		{
+			map->rotate_right(temp_node->x, temp_node->y);
+		}
+		else if( temp_node == temp_node->parent->child[2] )
+		{
+			map->rotate_left(temp_node->x, temp_node->y);
+		}
+		else if( temp_node == temp_node->parent->child[3] )
+		{
+			map->rotate_180(temp_node->x, temp_node->y);
+		}
+
+		temp_node = temp_node->parent;
+	}
+
+	return 0;
+}
+
+/**
  * Checks if rock is going to cross Indy's path or not
  * 
  * @param rock in question
@@ -565,7 +666,8 @@ int PTree::stop_rock(Rock& rock, PTreeNode* danger_node)
 				return 0;
 
 			temp_node = find_path_child( temp_node );
-			if( temp_node == temp_node->parent->child[0] )
+			if( temp_node == temp_node->parent->child[0]
+				&& rock_commands.find(temp_node) == rock_commands.end() )
 			{
 				std::string str;
 				std::stringstream ss( str );
