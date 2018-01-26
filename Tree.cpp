@@ -360,7 +360,6 @@ void PTree::backtrack()
 				if( it != rock_commands.end() )
 				{
 					commands.push_back(it->second);
-					rock_commands.erase(it);
 				}
 				else if( !reserve.empty() )
 				{
