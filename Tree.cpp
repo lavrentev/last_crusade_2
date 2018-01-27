@@ -520,8 +520,29 @@ int PTree::check_rock(Rock& rock)
 
 	while( temp_node != exit_node )
 	{
+		next_posi = map->path_find(next_x, next_y, next_posi);
+		status = map->next_room(next_x, next_y, next_posi);
+
+		if( status == -1 )
+			return -1;
+		if( status == 1 )
+			break;
+
+		temp_node = find_path_child( temp_node );
+
 		if( next_x == temp_node->x && next_y == temp_node->y )
 		{
+			next_posi = map->path_find(next_x, next_y, next_posi);
+			status = map->next_room(next_x, next_y, next_posi);
+
+			if( status == -1 )
+				return -1;
+			if( status == 1 )
+				break;
+
+			next_x = temp_node->x;
+			next_y = temp_node->y;
+
 			room_type temp_room = map->get_room_type( next_x, next_y );
 			if( temp_room == 4 )
 			{
@@ -545,16 +566,6 @@ int PTree::check_rock(Rock& rock)
 				return 1;
 			}
 		}
-
-		next_posi = map->path_find(next_x, next_y, next_posi);
-		status = map->next_room(next_x, next_y, next_posi);
-
-		if( status == -1 )
-			return -1;
-		if( status == 1 )
-			break;
-
-		temp_node = find_path_child( temp_node );
 	}
 
 	rock.status = SAFE;
@@ -586,8 +597,29 @@ int PTree::check_rock(Rock& rock, PTreeNode*& danger_node)
 
 	while( temp_node != exit_node )
 	{
+		next_posi = map->path_find(next_x, next_y, next_posi);
+		status = map->next_room(next_x, next_y, next_posi);
+
+		if( status == -1 )
+			return -1;
+		if( status == 1 )
+			break;
+
+		temp_node = find_path_child( temp_node );
+
 		if( next_x == temp_node->x && next_y == temp_node->y )
 		{
+			next_posi = map->path_find(next_x, next_y, next_posi);
+			status = map->next_room(next_x, next_y, next_posi);
+
+			if( status == -1 )
+				return -1;
+			if( status == 1 )
+				break;
+
+			next_x = temp_node->x;
+			next_y = temp_node->y;
+
 			room_type temp_room = map->get_room_type( next_x, next_y );
 			if( temp_room == 4 )
 			{
@@ -614,16 +646,6 @@ int PTree::check_rock(Rock& rock, PTreeNode*& danger_node)
 				return 1;
 			}
 		}
-
-		next_posi = map->path_find(next_x, next_y, next_posi);
-		status = map->next_room(next_x, next_y, next_posi);
-
-		if( status == -1 )
-			return -1;
-		if( status == 1 )
-			break;
-
-		temp_node = find_path_child( temp_node );
 	}
 
 	rock.status = SAFE;
