@@ -295,7 +295,7 @@ int Map::move_rocks()
 		if( status == -1 )
 			return -1;
 		if( status == 1 )
-			delete_rock(i);
+			rocks[i].status = DEAD;
 		else
 		{
 			rocks[i].x = next_x;

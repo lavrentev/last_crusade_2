@@ -4,7 +4,7 @@
 
 typedef short room_type;
 typedef enum posi { TOP, LEFT, RIGHT, STOP, NO_ENTRY = -1 } posi_t;
-typedef enum rock_status { UNKNOWN, SAFE, DANGER } rock_t;
+typedef enum rock_status { UNKNOWN, SAFE, DANGER, DEAD } rock_t;
 
 struct Rock
 {
