@@ -59,7 +59,7 @@ public:
 	int update_tree(unsigned xi, unsigned yi, posi_t position);
 
 private:
-	int build_tree(PTreeNode* node, unsigned xi, unsigned yi, posi_t position);
+	int build_tree(PTreeNode* node);
 	void backtrack();
 	inline void check_add_child(unsigned count, PTreeNode* node, unsigned xi, unsigned yi, posi_t position);
 	int actions_left(PTreeNode* node);

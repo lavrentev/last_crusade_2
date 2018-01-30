@@ -201,22 +201,31 @@ void PTree::check_add_child(unsigned count, PTreeNode* node, unsigned xi, unsign
 	{
 		if( node->child[count]->x != xi || node->child[count]->y != yi
 				|| node->child[count]->direction != position )
+		{
 			deleteSubTree( node->child[count] );
+			node->child[count] = nullptr;
+		}
 	}
 	node->add_child(count, xi, yi, position);
 }
 
-int PTree::build_tree(PTreeNode* node, unsigned xi, unsigned yi, posi_t position)
+int PTree::build_tree(PTreeNode* node)
 {
-	unsigned next_x, next_y;
-	posi_t next_posi;
 	int status;
 	room_type room[4];
 
+	unsigned next_x = node->x;
+	unsigned next_y = node->y;
+	posi_t next_posi = map->path_find(next_x, next_y, node->direction);
+	if( map->next_room(next_x, next_y, next_posi) != 0 )
+		return -1;
+
+	unsigned xi = next_x;
+	unsigned yi = next_y;
+	posi_t position = next_posi;
+
 	room[0] = map->get_room_type(xi, yi);
 
-	next_x = xi;
-	next_y = yi;
 	next_posi = map->path_find(xi, yi, position);
 	status = map->next_room(next_x, next_y, next_posi);
 	if( status == -1 )
@@ -232,7 +241,7 @@ int PTree::build_tree(PTreeNode* node, unsigned xi, unsigned yi, posi_t position
 			return status;
 		}
 
-		status = build_tree(node->child[0], next_x, next_y, next_posi);
+		status = build_tree(node->child[0]);
 		if( status != 1 )
 			return status;
 	}
@@ -260,7 +269,7 @@ int PTree::build_tree(PTreeNode* node, unsigned xi, unsigned yi, posi_t position
 				return status;
 			}
 
-			status = build_tree(node->child[1], next_x, next_y, next_posi);
+			status = build_tree(node->child[1]);
 			if( status != 1 )
 			{
 				map->set_room_type(xi, yi, room[0]);
@@ -292,7 +301,7 @@ int PTree::build_tree(PTreeNode* node, unsigned xi, unsigned yi, posi_t position
 				return status;
 			}
 
-			status = build_tree(node->child[2], next_x, next_y, next_posi);
+			status = build_tree(node->child[2]);
 			if( status != 1 )
 			{
 				map->set_room_type(xi, yi, room[0]);
@@ -326,7 +335,7 @@ int PTree::build_tree(PTreeNode* node, unsigned xi, unsigned yi, posi_t position
 					return status;
 				}
 
-				status = build_tree(node->child[3], next_x, next_y, next_posi);
+				status = build_tree(node->child[3]);
 				if( status != 1 )
 				{
 					map->set_room_type(xi, yi, room[0]);
@@ -793,13 +802,8 @@ int PTree::update_tree(unsigned xi, unsigned yi, posi_t position)
 	{
 		root = new PTreeNode(xi, yi, position);
 		current_node = root;
-		next_x = xi;
-		next_y = yi;
-		next_posi = map->path_find(next_x, next_y, position);
-		if( map->next_room(next_x, next_y, next_posi) != 0 )
-			return -1;
 
-		if( build_tree(root, next_x, next_y, next_posi) == -1 )
+		if( build_tree(root) == -1 )
 			return -1;
 		if( !found_exit )
 			return 1;
