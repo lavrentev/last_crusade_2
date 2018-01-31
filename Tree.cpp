@@ -363,40 +363,38 @@ void PTree::backtrack()
 			std::string str;
 			std::stringstream ss( str );
 
-			if( node == node->parent->child[0] )
-			{
-				it = rock_commands.find(node);
-				if( it != rock_commands.end() )
-				{
-					commands.push_back(it->second);
-				}
-				else if( !reserve.empty() )
-				{
-					commands.push_back(reserve.top());
-					reserve.pop();
-				}
-				else
-					commands.push_back(std::string("WAIT"));
-			}
-			else if( node == node->parent->child[1] )
+			if( node == node->parent->child[1] )
 			{
 				ss << node->x << ' ' << node->y << ' ' << "LEFT";
 				std::getline(ss, str);
-				commands.push_back(str);
+				reserve.push(str);
 			}
 			else if( node == node->parent->child[2] )
 			{
 				ss << node->x << ' ' << node->y << ' ' << "RIGHT";
 				std::getline(ss, str);
-				commands.push_back(str);
+				reserve.push(str);
 			}
 			else if( node == node->parent->child[3] )
 			{
 				ss << node->x << ' ' << node->y << ' ' << "RIGHT";
 				std::getline(ss, str);
-				commands.push_back(str);
+				reserve.push(str);
 				reserve.push(str);
 			}
+
+			it = rock_commands.find(node);
+			if( it != rock_commands.end() )
+			{
+				commands.push_back(it->second);
+			}
+			else if( !reserve.empty() )
+			{
+				commands.push_back(reserve.top());
+				reserve.pop();
+			}
+			else
+				commands.push_back(std::string("WAIT"));
 
 			node = node->parent;
 		}
@@ -696,7 +694,7 @@ int PTree::stop_rock(Rock& rock, PTreeNode* danger_node)
 				return 0;
 
 			temp_node = find_path_child( temp_node );
-			if( temp_node == temp_node->parent->child[0]
+			if( actions_left(temp_node) > 0
 				&& rock_commands.find(temp_node) == rock_commands.end() )
 			{
 				std::string str;
