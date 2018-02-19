@@ -69,14 +69,7 @@ PTree::PTree(Map* _map) :
 PTree::~PTree()
 {
 	if(root)
-	{
-		deleteSubTree(root->child[0]);
-		deleteSubTree(root->child[1]);
-		deleteSubTree(root->child[2]);
-		deleteSubTree(root->child[3]);
-
-		delete root;
-	}
+		deleteSubTree(root);
 
 	rock_commands.clear();
 	commands.clear();
@@ -87,11 +80,16 @@ void PTree::deleteSubTree(PTreeNode* node)
 	if(node)
 	{
 		deleteSubTree(node->child[0]);
+		node->child[0] = nullptr;
 		deleteSubTree(node->child[1]);
+		node->child[1] = nullptr;
 		deleteSubTree(node->child[2]);
+		node->child[2] = nullptr;
 		deleteSubTree(node->child[3]);
+		node->child[3] = nullptr;
 
 		delete node;
+		node = nullptr;
 	}
 }
 
@@ -201,10 +199,7 @@ void PTree::check_add_child(unsigned count, PTreeNode* node, unsigned xi, unsign
 	{
 		if( node->child[count]->x != xi || node->child[count]->y != yi
 				|| node->child[count]->direction != position )
-		{
 			deleteSubTree( node->child[count] );
-			node->child[count] = nullptr;
-		}
 	}
 	node->add_child(count, xi, yi, position);
 }
