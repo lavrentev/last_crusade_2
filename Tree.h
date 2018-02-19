@@ -37,6 +37,7 @@ class PTree
 	bool backtrack_needed;
 	PTreeNode* exit_node;
 	PTreeNode* current_node;
+	std::map<unsigned, PTreeNode*> danger_rocks;
 
 public:
 	PTree();
@@ -71,6 +72,8 @@ private:
 	int check_rock(Rock& rock, PTreeNode*& danger_node);
 	// Function trying to stop the rock from crushing Indy
 	int stop_rock(Rock& rock, PTreeNode* danger_node);
+	// Function processing all the rocks
+	int handle_rocks();
 	// Functions imitating the path on the map
 	int open_path();
 	int close_path();

@@ -769,6 +769,62 @@ int PTree::stop_rock(Rock& rock, PTreeNode* danger_node)
 	return 1;
 }
 
+int PTree::handle_rocks()
+{
+	int status;
+	unsigned i;
+	PTreeNode* temp_node;
+
+	if( open_path() == -1 )
+		return -1;
+	
+	for( i = 0; i < map->rocks_size(); ++i )
+	{
+		Rock& rock = map->get_rock(i);
+		if( rock.status == UNKNOWN )
+		{
+			status = check_rock(rock, temp_node);
+			if( status == -1 )
+				return -1;
+			if( status == 1 )
+				danger_rocks[i] = temp_node;
+		}
+	}
+	
+	for( auto it = danger_rocks.begin(); it != danger_rocks.end(); )
+	{
+		Rock& rock = map->get_rock(it->first);
+		status = stop_rock(rock, it->second);
+		if( status == -1 )
+			return -1;
+		if( status == 0 )
+		{
+			backtrack_needed = true;
+			danger_rocks.erase(it++);
+		}
+		else
+		{
+			close_path();
+			rock_commands.clear();
+			danger_rocks.clear();
+			for( unsigned r = 0; r < map->rocks_size(); ++r )
+				map->get_rock(r).status = UNKNOWN;
+
+			status = build_tree(current_node);
+			if( status != 0 )
+				return status;
+			else
+			{
+				backtrack_needed = true;
+				return handle_rocks();
+			}
+		}
+	}
+	
+	close_path();
+	return 0;
+}
+
 int PTree::update_tree(unsigned xi, unsigned yi, posi_t position)
 {
 	if( !map )
