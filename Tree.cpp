@@ -857,8 +857,15 @@ int PTree::update_tree(unsigned xi, unsigned yi, posi_t position)
 		if( !found_exit )
 			return 1;
 
-		backtrack();
+		backtrack_needed = true;
 	}
+
+	int status = handle_rocks();
+	if( status != 0 )
+		return status;
+
+	backtrack();
+
 	return 0;
 }
 
